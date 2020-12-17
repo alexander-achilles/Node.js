@@ -12,7 +12,7 @@ const errorController = require('./controllers/error');
 const User = require('./models/user');
 
 const MONGODB_URI =
-  '<MONGODB CONNECTION URL>';
+"mongodb+srv://<username>:<userpassword>@cluster0.pwkc0.mongodb.net/e-shopDB?retryWrites=true&w=majority";
 
 const app = express();
 const store = new MongoDBStore({
@@ -68,7 +68,9 @@ app.use(errorController.get404);
 mongoose
   .connect(MONGODB_URI)
   .then(result => {
-    app.listen(3000);
+    app.listen(3000,()=>{
+      console.log("server is up");
+    });
   })
   .catch(err => {
     console.log(err);

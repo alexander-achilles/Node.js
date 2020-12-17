@@ -1,4 +1,12 @@
 const bcrypt = require('bcryptjs');
+const nodemailer=require("nodemailer");
+const mandrillTransport= require("nodemailer-mandrill-transport");
+
+const transport=nodemailer.createTransport(mandrillTransport({
+  auth:{
+    apikey: "<API KEY>"
+  }
+}));
 
 const User = require('../models/user');
 
@@ -83,6 +91,14 @@ exports.postSignup = (req, res, next) => {
         })
         .then(result => {
           res.redirect('/login');
+          return transport.sendMail({
+            from:"test@node-mail.com",
+            to: email,
+            subject: "TEST",
+            html: "<h1>I hope it's get delivered</h1>"
+          })
+        }).catch(err=>{
+          console.log(err);
         });
     })
     .catch(err => {
