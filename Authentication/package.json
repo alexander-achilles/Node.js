@@ -21,6 +21,7 @@
     "flash": "^1.1.0",
     "mongoose": "^5.11.8",
     "nodemailer": "^6.4.17",
+    "nodemailer-mailgun-transport": "^2.0.2",
     "nodemailer-mandrill-transport": "^1.2.0"
   }
 }
