@@ -1,3 +1,5 @@
+const errorHandlerObjectWrapper = require('../util/errorHandlerObjectWrapper');
+
 const Product = require('../models/product');
 const Order = require('../models/order');
 
@@ -11,11 +13,7 @@ exports.getProducts = (req, res, next) => {
         path: '/products'
       });
     })
-    .catch(err => {
-      const error =  new Error(err);
-      error.httpStatusCode= 500;
-      return next(error);
-    });
+    .catch(err => errorHandlerObjectWrapper(500, err));
 };
 
 exports.getProduct = (req, res, next) => {
@@ -28,11 +26,8 @@ exports.getProduct = (req, res, next) => {
         path: '/products'
       });
     })
-    .catch(err => {
-      const error =  new Error(err);
-      error.httpStatusCode= 500;
-      return next(error);
-    });};
+    .catch(err => console.log(err));
+};
 
 exports.getIndex = (req, res, next) => {
   Product.find()
@@ -43,11 +38,7 @@ exports.getIndex = (req, res, next) => {
         path: '/'
       });
     })
-    .catch(err => {
-      const error =  new Error(err);
-      error.httpStatusCode= 500;
-      return next(error);
-    });
+    .catch(err => errorHandlerObjectWrapper(500, err));
 };
 
 exports.getCart = (req, res, next) => {
@@ -62,11 +53,8 @@ exports.getCart = (req, res, next) => {
         products: products
       });
     })
-    .catch(err => {
-      const error =  new Error(err);
-      error.httpStatusCode= 500;
-      return next(error);
-    });};
+    .catch(err => console.log(err));
+};
 
 exports.postCart = (req, res, next) => {
   const prodId = req.body.productId;
@@ -87,11 +75,8 @@ exports.postCartDeleteProduct = (req, res, next) => {
     .then(result => {
       res.redirect('/cart');
     })
-    .catch(err => {
-      const error =  new Error(err);
-      error.httpStatusCode= 500;
-      return next(error);
-    });};
+    .catch(err => console.log(err));
+};
 
 exports.postOrder = (req, res, next) => {
   req.user
@@ -116,11 +101,8 @@ exports.postOrder = (req, res, next) => {
     .then(() => {
       res.redirect('/orders');
     })
-    .catch(err => {
-      const error =  new Error(err);
-      error.httpStatusCode= 500;
-      return next(error);
-    });};
+    .catch(err => console.log(err));
+};
 
 exports.getOrders = (req, res, next) => {
   Order.find({ 'user.userId': req.user._id })
@@ -131,8 +113,5 @@ exports.getOrders = (req, res, next) => {
         orders: orders
       });
     })
-    .catch(err => {
-      const error =  new Error(err);
-      error.httpStatusCode= 500;
-      return next(error);
-    });};
+    .catch(err => console.log(err));
+};

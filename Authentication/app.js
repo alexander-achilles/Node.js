@@ -1,5 +1,6 @@
 const path = require('path');
 
+const dotenv = require('dotenv');
 const express = require('express');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
@@ -9,10 +10,15 @@ const csrf = require('csurf');
 const flash = require('connect-flash');
 
 const errorController = require('./controllers/error');
+const errorHandlerObjectWrapper = require('./util/errorHandlerObjectWrapper');
+
 const User = require('./models/user');
 
+dotenv.config();
+const envvars = process.env;
+
 const MONGODB_URI =
-"mongodb+srv://<username>:<userpassword>@cluster0.pwkc0.mongodb.net/e-shopDB?retryWrites=true&w=majority";
+"";
 
 const app = express();
 const store = new MongoDBStore({
@@ -27,13 +33,6 @@ app.set('views', 'views');
 const adminRoutes = require('./routes/admin');
 const shopRoutes = require('./routes/shop');
 const authRoutes = require('./routes/auth');
-
-app.use((req, res, next) => {
-  res.locals.isAuthenticated = req.session.isLoggedIn;
-  res.locals.csrfToken = req.csrfToken();
-  next();
-});
-
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -54,33 +53,38 @@ app.use((req, res, next) => {
   }
   User.findById(req.session.user._id)
     .then(user => {
-      if(!user){
+      if (!user) {
         return next();
       }
       req.user = user;
       next();
     })
-    .catch(err =>
-      {throw new Error(err);}
-      );
+    .catch(err => {
+      next(errorHandlerObjectWrapper(500, err));
+    });
 });
 
+app.use((req, res, next) => {
+  res.locals.isAuthenticated = req.session.isLoggedIn;
+  res.locals.csrfToken = req.csrfToken();
+  next();
+});
 
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
 
+app.get('/500', errorController.get500);
+
 app.use(errorController.get404);
 
-app.use((error, req, res, next)=>{
-  res.status(500).render('500', {
-    pageTitle: 'Error',
-    path: '/500',
-    isAuthenticated: req.session.isLoggedIn
-  });
-})
+app.use((error, req, res, next) => {
+  // res.render(error.httpStatusCode).render(...);
+  res.redirect('/500');
+});
+
 mongoose
-  .connect(MONGODB_URI)
+  .connect(MONGODB_URI,{ useNewUrlParser: true })
   .then(result => {
     app.listen(3000,()=>{
       console.log("server is up");
