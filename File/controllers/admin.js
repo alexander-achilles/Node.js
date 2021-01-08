@@ -193,5 +193,7 @@ exports.deleteProduct = (req, res, next) => {
     console.log('DESTROYED PRODUCT');
     res.status(200).json({ message: 'Success!' });
   })
-  res.status(500).json({ message: 'Deleting product failed.' });
+  .catch(err => {
+    res.status(500).json({ message: 'Deleting product failed.' });
+  });
 };

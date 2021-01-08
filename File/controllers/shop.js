@@ -1,11 +1,17 @@
 const fs = require('fs');
 const path = require('path');
+const dotenv = require('dotenv');
+const stripe = require('stripe')('sk_test_QHNKaxhuqvrUlkLFzsszVhcI00TJgtcdhO');
 
 const errorHandlerObjectWrapper = require('../util/errorHandlerObjectWrapper');
 const PDFDocument = require('pdfkit');
 
 const Product = require('../models/product');
 const Order = require('../models/order');
+
+dotenv.config();
+const envvars = process.env;
+const ITEMS_PER_PAGE = +envvars.ITEMS_PER_PAGE;
 
 exports.getProducts = (req, res, next) => {
   const page = +req.query.page || 1;
@@ -46,8 +52,6 @@ exports.getProduct = (req, res, next) => {
     })
     .catch(err => errorHandlerObjectWrapper(500, err, next));
 };
-
-const ITEMS_PER_PAGE= 1;
 
 exports.getIndex = (req, res, next) => {
   const page = +req.query.page || 1;
@@ -115,10 +119,16 @@ exports.postCartDeleteProduct = (req, res, next) => {
 };
 
 exports.postOrder = (req, res, next) => {
+  const token = req.body.stripeToken;
+  let totalSum = 0;
+
   req.user
-    .populate('cart.items.productId')
+    .populate("cart.items.productId")
     .execPopulate()
     .then(user => {
+      user.cart.items.forEach(p => {
+        totalSum += p.quantity * p.productId.price;
+      });
       const products = user.cart.items.map(i => {
         return { quantity: i.quantity, product: { ...i.productId._doc } };
       });
@@ -132,10 +142,17 @@ exports.postOrder = (req, res, next) => {
       return order.save();
     })
     .then(result => {
+      const charge = stripe.charges.create({
+        amount: totalSum,
+        currency: "usd",
+        description: "Demo Order",
+        source: token,
+        metadata: { order_id: result._id.toString() }
+      });
       return req.user.clearCart();
     })
     .then(() => {
-      res.redirect('/orders');
+      res.redirect("/orders");
     })
     .catch(err => errorHandlerObjectWrapper(500, err, next));
 };
@@ -166,13 +183,11 @@ exports.getInvoice = (req, res, next) => {
 
     const pdfDoc = new PDFDocument();
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'inline; filename="' + invoiceName + '"');
+    res.setHeader('Content-Disposition', 'attachment; filename="' + invoiceName + '"');
     pdfDoc.pipe(fs.createWriteStream(invoicePath));
     pdfDoc.pipe(res);
 
-    pdfDoc.fontSize(26).text('Invoice', {
-      underline: true,
-    });
+    pdfDoc.fontSize(26).text('Invoice', { underline: true });
     pdfDoc.text('----------------------------------');
     let totalprice = 0;
     order.products.forEach(prod => {
@@ -200,6 +215,25 @@ exports.getInvoice = (req, res, next) => {
     // });
     // const file = fs.createReadStream(invoicePath);
     // file.pipe(res);
-  })
-    .catch(err => next(err));
+  }).catch(err => next(err));
 };
+
+exports.getCheckout = (req, res, next) => {
+  req.user
+    .populate('cart.items.productId')
+    .execPopulate()
+    .then(user => {
+      const products = user.cart.items;
+      let total = 0;
+      products.forEach(p => {
+        total += p.quantity * p.productId.price
+      });
+      res.render('shop/checkout', {
+        path: '/checkout',
+        pageTitle: 'Checkout',
+        products: products,
+        totalSum: total,
+      });
+    })
+    .catch(err => errorHandlerObjectWrapper(500, err, next));
+}
