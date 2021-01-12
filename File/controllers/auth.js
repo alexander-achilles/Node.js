@@ -7,7 +7,6 @@ const nodemailer = require('nodemailer');
 const mailgunTransport= require("nodemailer-mailgun-transport");
 const { validationResult } = require('express-validator/check');
 
-const errorHandlerObjectWrapper = require('../util/errorHandlerObjectWrapper');
 
 const User = require('../models/user');
 
