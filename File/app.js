@@ -8,15 +8,15 @@ const MongoDBStore = require('connect-mongodb-session')(session);
 const csrf = require('csurf');
 const flash = require('connect-flash');
 const multer = require('multer');
+const helmet=require("helmet");
+const compression=require("compression");
 
 const errorController = require('./controllers/error');
 const User = require('./models/user');
 
 require('dotenv').config()
 
-const MONGODB_URI =
-  'mongodb+srv://teddy_m:teddy8016@cluster0.pwkc0.mongodb.net/e-shopDB?retryWrites=true&w=majority';
-
+const MONGODB_URI=`mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASS}@cluster0.pwkc0.mongodb.net/${process.env.MONGO_DBNAME}?retryWrites=true&w=majority`;
 const app = express();
 const store = new MongoDBStore({
   uri: MONGODB_URI,
@@ -51,6 +51,9 @@ app.set('views', 'views');
 const adminRoutes = require('./routes/admin');
 const shopRoutes = require('./routes/shop');
 const authRoutes = require('./routes/auth');
+
+app.use(helmet());
+app.use(compression());
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(
